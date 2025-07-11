@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Video Listele & Oynat</title>
+</head>
+<body>
+  <h1>Video Yükle</h1>
+  <form action="/api/upload" method="POST" enctype="multipart/form-data">
+    <input type="file" name="video" accept="video/*" required />
+    <button type="submit">Yükle</button>
+  </form>
+
+  <h2>Yüklenen Videolar</h2>
+  <ul id="video-list"></ul>
+
+  <h2>Seçilen Video</h2>
+  <video id="video-player" width="640" height="360" controls></video>
+
+  <script>
+    async function fetchVideos() {
+      const res = await fetch('/api/videos');
+      const videos = await res.json();
+
+      const list = document.getElementById('video-list');
+      const player = document.getElementById('video-player');
+
+      list.innerHTML = '';
+      videos.forEach(video => {
+        const li = document.createElement('li');
+        li.textContent = video.originalname;
+        li.style.cursor = 'pointer';
+        li.onclick = () => {
+          player.src = `/api/stream/${video.filename}`;
+          player.load();
+          player.play();
+        };
+        list.appendChild(li);
+      });
+    }
+
+    // Sayfa yüklendiğinde videoları getir
+    window.onload = fetchVideos;
+  </script>
+</body>
+</html>
