@@ -36,7 +36,3 @@ NodeStream, profesyonel bir video içerik platformunun sahip olması gereken tem
 ## 💡 Not
 
 Bu proje, geliştirilmeye açık yapısı ile hem eğitim hem de ileri düzey projeler için temel olarak kullanılabilir.
-
-## 📄 Lisans
-
-MIT Lisansı
