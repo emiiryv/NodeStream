@@ -33,14 +33,24 @@
       z-index: 1;
     }
 
-    #tsparticles {
+
+    body::before {
+      content: "";
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
+      background: linear-gradient(-45deg, #1f1f2e, #2a1d3a, #221a2e, #2e1f40);
+      background-size: 400% 400%;
+      animation: gradientBG 12s ease infinite;
       z-index: -1;
-      pointer-events: none;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
     .container {
@@ -152,7 +162,7 @@
   </style>
 </head>
 <body>
-  <div id="tsparticles"></div>
+  
   <div class="container">
     <header>
       <img class="logo" src="logo.png" alt="NodeStream Logo">
@@ -192,27 +202,5 @@
       &copy; 2025 NodeStream | Developed by Emir Yavuz
     </footer>
   </div>
-  <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      tsParticles.load("tsparticles", {
-        fullScreen: { enable: false },
-        background: { color: "#0d1117" },
-        fpsLimit: 60,
-        particles: {
-          number: { value: 80 },
-          color: { value: "#b388ff" },
-          shape: { type: "circle" },
-          opacity: { value: 0.4 },
-          size: { value: 2 },
-          move: {
-            enable: true,
-            speed: 0.5,
-            direction: "none",
-            outModes: { default: "out" }
-          }
-        }
-      });
-    });
-  </script>
 </body>
 </html>
