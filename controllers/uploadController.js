@@ -2,17 +2,18 @@ const path = require('path');
 const pool = require('../db/index');
 
 const handleUpload = async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'Dosya yüklenemedi.' });
+  if (!req.file || !req.user) {
+    return res.status(400).json({ error: 'Dosya veya kullanıcı bilgisi eksik.' });
   }
 
   const { originalname, filename, mimetype, size } = req.file;
+  const userId = req.user.userId;
 
   try {
     const result = await pool.query(
-      `INSERT INTO videos (filename, originalname, mimetype, size)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [filename, originalname, mimetype, size]
+      `INSERT INTO videos (filename, originalname, mimetype, size, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [filename, originalname, mimetype, size, userId]
     );
 
     res.status(201).json({

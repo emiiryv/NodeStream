@@ -2,10 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const { handleUpload } = require('../controllers/uploadController');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// uploads klasörünü ayarla
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/');
@@ -19,6 +19,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.post('/', upload.single('video'), handleUpload);
+// 🔐 authMiddleware sayesinde sadece giriş yapanlar yükleyebilir
+router.post('/', authMiddleware, upload.single('video'), handleUpload);
 
 module.exports = router;
