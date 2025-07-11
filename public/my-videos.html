@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Video Platformu</title>
+  <meta charset="UTF-8" />
+  <title>Benim Videolarım</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script>
     if (!localStorage.getItem('token')) {
@@ -13,42 +13,27 @@
 <body class="bg-light">
 
   <div class="container my-5">
-    <h1 class="mb-4 text-center">🎥 Video Yükle</h1>
-    <form class="mb-5" id="uploadForm" enctype="multipart/form-data">
-      <div class="input-group">
-        <input type="file" name="video" accept="video/*" class="form-control" required>
-        <button class="btn btn-primary" type="submit">Yükle</button>
-      </div>
-    </form>
-
-    <h2 class="mb-4 text-center">Yüklenen Videolar</h2>
+    <h1 class="mb-4 text-center">📁 Benim Videolarım</h1>
     <div class="row" id="video-list"></div>
-
   </div>
 
   <script>
-    async function fetchVideos() {
+    async function fetchMyVideos() {
       const token = localStorage.getItem('token');
-      if (!token) {
-        window.location.href = 'login.html';
-        return;
-      }
-
-      const res = await fetch('/api/videos', {
+      const res = await fetch('/api/videos/mine', {
         headers: {
           Authorization: 'Bearer ' + token
         }
       });
 
       if (res.status === 401 || res.status === 403) {
-        alert('Oturumunuzun süresi doldu. Lütfen tekrar giriş yapın.');
+        alert('Giriş süresi dolmuş. Lütfen tekrar giriş yapın.');
         localStorage.removeItem('token');
         window.location.href = 'login.html';
         return;
       }
 
       const videos = await res.json();
-
       const list = document.getElementById('video-list');
 
       list.innerHTML = '';
@@ -74,45 +59,37 @@
         title.className = 'card-title';
         title.textContent = video.originalname;
 
-        cardBody.appendChild(title);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-danger w-100 mt-2';
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = async (e) => {
+          e.stopPropagation();
+          if (!confirm('Silmek istediğinize emin misiniz?')) return;
+          const delRes = await fetch(`/api/videos/${video.id}`, {
+            method: 'DELETE',
+            headers: {
+              Authorization: 'Bearer ' + token
+            }
+          });
 
+          if (delRes.ok) {
+            alert('Video silindi');
+            fetchMyVideos();
+          } else {
+            alert('Silme başarısız');
+          }
+        };
+
+        cardBody.appendChild(title);
+        cardBody.appendChild(deleteBtn);
         card.appendChild(thumb);
         card.appendChild(cardBody);
         col.appendChild(card);
         list.appendChild(col);
       });
-
-      const myVideosLink = document.createElement('a');
-      myVideosLink.href = 'my-videos.html';
-      myVideosLink.className = 'btn btn-secondary d-block mx-auto mb-4';
-      myVideosLink.textContent = 'Benim Videolarım';
-      document.querySelector('h2.mb-4').after(myVideosLink);
     }
 
-    window.onload = () => fetchVideos();
-
-    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const token = localStorage.getItem('token');
-      const fileInput = document.querySelector('input[name="video"]');
-      const formData = new FormData();
-      formData.append('video', fileInput.files[0]);
-
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer ' + token
-        },
-        body: formData
-      });
-
-      if (res.ok) {
-        alert('Yükleme başarılı');
-        fetchVideos(); // listeyi yenile
-      } else {
-        alert('Yükleme başarısız');
-      }
-    });
+    window.onload = fetchMyVideos;
   </script>
 </body>
 </html>

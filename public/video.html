@@ -1,0 +1,105 @@
+
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Video Detay</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    if (!localStorage.getItem('token')) {
+      window.location.href = 'login.html';
+    }
+  </script>
+</head>
+<body class="bg-light">
+  <div class="container my-5">
+    <h1 class="text-center mb-4" id="video-title">Video Başlığı</h1>
+    <div class="d-flex justify-content-center">
+      <video id="video-player" width="720" height="400" controls class="border border-secondary rounded shadow"></video>
+    </div>
+
+    <div class="text-center mt-3">
+      <img id="video-thumb" src="" alt="Thumbnail" style="max-width: 400px; border-radius: 6px;" onerror="this.src='https://via.placeholder.com/720x400?text=No+Thumbnail'" />
+    </div>
+
+    <div class="mt-5">
+      <h3>Yorumlar</h3>
+      <ul id="comment-list" class="list-group mb-3"></ul>
+      <form id="comment-form">
+        <div class="mb-3">
+          <label for="comment-input" class="form-label">Yorumunuz</label>
+          <textarea class="form-control" id="comment-input" rows="2" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Yorum Ekle</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const token = localStorage.getItem('token');
+
+    if (!id) {
+      alert('Video ID bulunamadı');
+      window.location.href = 'index.html';
+    }
+
+    async function loadVideo() {
+      const res = await fetch('/api/videos', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const videos = await res.json();
+      const video = videos.find(v => v.id == id);
+      if (!video) {
+        alert('Video bulunamadı');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      document.getElementById('video-title').textContent = video.originalname;
+      document.getElementById('video-player').src = '/api/stream/' + video.filename;
+      document.getElementById('video-thumb').src = '/thumbnails/' + (video.thumbnail_path || 'placeholder.jpg');
+      await loadComments();
+    }
+
+    async function loadComments() {
+      const res = await fetch(`/api/videos/${id}/comments`, {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const comments = await res.json();
+      const list = document.getElementById('comment-list');
+      list.innerHTML = '';
+      comments.forEach(c => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.textContent = `${c.yorum} (${new Date(c.tarih).toLocaleString()})`;
+        list.appendChild(li);
+      });
+    }
+
+    document.getElementById('comment-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const yorum = document.getElementById('comment-input').value;
+      const res = await fetch(`/api/videos/${id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({ yorum })
+      });
+
+      if (res.ok) {
+        document.getElementById('comment-input').value = '';
+        loadComments();
+      } else {
+        alert('Yorum gönderilemedi');
+      }
+    });
+
+    window.onload = loadVideo;
+  </script>
+</body>
+</html>
