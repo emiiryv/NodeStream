@@ -6,8 +6,38 @@ const router = express.Router();
 
 // Tüm videolar (herkes görebilir)
 router.get('/', async (req, res) => {
+  const { search = '', sort = 'date' } = req.query;
+
+  let baseQuery = `
+    SELECT v.*, COUNT(l.id) AS like_count
+    FROM videos v
+    LEFT JOIN likes l ON v.id = l.video_id
+    WHERE v.originalname ILIKE $1 OR v.filename ILIKE $1
+    GROUP BY v.id
+  `;
+
+  if (sort === 'likes') {
+    baseQuery += ' ORDER BY like_count DESC';
+  } else if (sort === 'popular') {
+    baseQuery = `
+      SELECT v.*, COUNT(DISTINCT l.id) AS like_count, COUNT(DISTINCT c.id) AS comment_count
+      FROM videos v
+      LEFT JOIN likes l ON v.id = l.video_id
+      LEFT JOIN comments c ON v.id = c.video_id
+      WHERE v.originalname ILIKE $1 OR v.filename ILIKE $1
+      GROUP BY v.id
+      ORDER BY (COUNT(DISTINCT l.id) + COUNT(DISTINCT c.id)) DESC
+    `;
+  } else if (sort === 'date_asc') {
+    baseQuery += ' ORDER BY v.upload_date ASC';
+  } else if (sort === 'date_desc' || sort === 'date') {
+    baseQuery += ' ORDER BY v.upload_date DESC';
+  } else {
+    baseQuery += ' ORDER BY v.upload_date DESC';
+  }
+
   try {
-    const result = await pool.query('SELECT * FROM videos ORDER BY upload_date DESC');
+    const result = await pool.query(baseQuery, [`%${search}%`]);
     res.json(result.rows);
   } catch (err) {
     console.error(err);

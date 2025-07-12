@@ -22,6 +22,15 @@
     </form>
 
     <h2 class="mb-4 text-center">Yüklenen Videolar</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <input id="searchInput" class="form-control w-50 me-2" type="text" placeholder="Videolarda ara...">
+      <select id="sortSelect" class="form-select w-25">
+        <option value="date_desc">En Yeni (⏫)</option>
+        <option value="date_asc">En Eski (⏬)</option>
+        <option value="likes">En Beğenilen</option>
+        <option value="popular">Popülerlik</option>
+      </select>
+    </div>
     <div class="row" id="video-list"></div>
 
   </div>
@@ -34,7 +43,11 @@
         return;
       }
 
-      const res = await fetch('/api/videos', {
+      const search = document.getElementById('searchInput')?.value || '';
+      const sort = document.getElementById('sortSelect')?.value || 'date';
+      const query = new URLSearchParams({ search, sort });
+
+      const res = await fetch('/api/videos?' + query.toString(), {
         headers: {
           Authorization: 'Bearer ' + token
         }
@@ -48,10 +61,9 @@
       }
 
       const videos = await res.json();
-
       const list = document.getElementById('video-list');
-
       list.innerHTML = '';
+
       videos.forEach(video => {
         const col = document.createElement('div');
         col.className = 'col-md-4 mb-4';
@@ -75,21 +87,28 @@
         title.textContent = video.originalname;
 
         cardBody.appendChild(title);
-
         card.appendChild(thumb);
         card.appendChild(cardBody);
         col.appendChild(card);
         list.appendChild(col);
       });
 
-      const myVideosLink = document.createElement('a');
-      myVideosLink.href = 'my-videos.html';
-      myVideosLink.className = 'btn btn-secondary d-block mx-auto mb-4';
-      myVideosLink.textContent = 'Benim Videolarım';
-      document.querySelector('h2.mb-4').after(myVideosLink);
+      const myVideosLink = document.getElementById('myVideosLink');
+      if (!myVideosLink) {
+        const link = document.createElement('a');
+        link.id = 'myVideosLink';
+        link.href = 'my-videos.html';
+        link.className = 'btn btn-secondary d-block mx-auto mb-4';
+        link.textContent = 'Benim Videolarım';
+        document.querySelector('h2.mb-4').after(link);
+      }
     }
 
-    window.onload = () => fetchVideos();
+    window.onload = () => {
+      fetchVideos();
+      document.getElementById('searchInput').addEventListener('input', fetchVideos);
+      document.getElementById('sortSelect').addEventListener('change', fetchVideos);
+    };
 
     document.getElementById('uploadForm').addEventListener('submit', async (e) => {
       e.preventDefault();
