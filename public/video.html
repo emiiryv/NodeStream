@@ -23,10 +23,6 @@
       <div class="mt-1"><small><span id="like-count">0</span> beğeni</small></div>
     </div>
 
-    <div class="text-center mt-3">
-      <img id="video-thumb" src="" alt="Thumbnail" style="max-width: 400px; border-radius: 6px;" onerror="this.src='https://via.placeholder.com/720x400?text=No+Thumbnail'" />
-    </div>
-
     <div class="mt-5">
       <h3>Yorumlar</h3>
       <ul id="comment-list" class="list-group mb-3"></ul>
@@ -38,6 +34,7 @@
         <button type="submit" class="btn btn-primary">Yorum Ekle</button>
       </form>
     </div>
+    
   </div>
 
   <script>
@@ -64,7 +61,7 @@
 
       document.getElementById('video-title').textContent = video.originalname;
       document.getElementById('video-player').src = '/api/stream/' + video.filename;
-      document.getElementById('video-thumb').src = '/thumbnails/' + (video.thumbnail_path || 'placeholder.jpg');
+      document.getElementById('video-player').poster = '/thumbnails/' + (video.thumbnail_path || (video.filename + '.jpg'));
       await loadComments();
       await loadLikes();
     }

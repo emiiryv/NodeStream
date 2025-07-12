@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'))); // HTML dosyaları
+app.use('/thumbnails', express.static(path.join(__dirname, 'thumbnails')));
 
 // API Routes
 app.use('/api/upload', uploadRoutes);

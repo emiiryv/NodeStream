@@ -62,7 +62,7 @@
         card.onclick = () => { window.location.href = 'video.html?id=' + video.id; };
 
         const thumb = document.createElement('img');
-        thumb.src = '/thumbnails/' + (video.thumbnail_path || 'placeholder.jpg');
+        thumb.src = '/thumbnails/' + (video.thumbnail_path || (video.filename + '.jpg'));
         thumb.alt = 'Thumbnail';
         thumb.className = 'card-img-top';
         thumb.onerror = () => thumb.src = 'https://via.placeholder.com/720x400?text=No+Thumbnail';
