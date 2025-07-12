@@ -58,3 +58,46 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
+
+// POST like/unlike (toggle)
+router.post('/:id/like', authMiddleware, async (req, res) => {
+  const videoId = req.params.id;
+  const userId = req.user.userId;
+
+  try {
+    const check = await pool.query(
+      'SELECT * FROM likes WHERE video_id = $1 AND user_id = $2',
+      [videoId, userId]
+    );
+
+    if (check.rows.length > 0) {
+      await pool.query('DELETE FROM likes WHERE video_id = $1 AND user_id = $2', [videoId, userId]);
+      res.json({ liked: false });
+    } else {
+      await pool.query('INSERT INTO likes (video_id, user_id) VALUES ($1, $2)', [videoId, userId]);
+      res.json({ liked: true });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Beğeni işlemi başarısız' });
+  }
+});
+
+// GET like count and user status
+router.get('/:id/likes', authMiddleware, async (req, res) => {
+  const videoId = req.params.id;
+  const userId = req.user.userId;
+
+  try {
+    const count = await pool.query('SELECT COUNT(*) FROM likes WHERE video_id = $1', [videoId]);
+    const check = await pool.query('SELECT 1 FROM likes WHERE video_id = $1 AND user_id = $2', [videoId, userId]);
+
+    res.json({
+      totalLikes: parseInt(count.rows[0].count),
+      likedByUser: check.rows.length > 0
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Beğeni bilgisi alınamadı' });
+  }
+});

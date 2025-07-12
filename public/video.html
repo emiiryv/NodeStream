@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -17,6 +15,12 @@
     <h1 class="text-center mb-4" id="video-title">Video Başlığı</h1>
     <div class="d-flex justify-content-center">
       <video id="video-player" width="720" height="400" controls class="border border-secondary rounded shadow"></video>
+    </div>
+    <div class="text-center mt-3">
+      <button id="like-btn" class="btn btn-outline-danger">
+        ❤️ Beğen
+      </button>
+      <div class="mt-1"><small><span id="like-count">0</span> beğeni</small></div>
     </div>
 
     <div class="text-center mt-3">
@@ -62,6 +66,7 @@
       document.getElementById('video-player').src = '/api/stream/' + video.filename;
       document.getElementById('video-thumb').src = '/thumbnails/' + (video.thumbnail_path || 'placeholder.jpg');
       await loadComments();
+      await loadLikes();
     }
 
     async function loadComments() {
@@ -73,11 +78,49 @@
       list.innerHTML = '';
       comments.forEach(c => {
         const li = document.createElement('li');
-        li.className = 'list-group-item';
-        li.textContent = `${c.yorum} (${new Date(c.tarih).toLocaleString()})`;
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+          <span>${c.yorum} <small class="text-muted">(${new Date(c.tarih).toLocaleString()})</small></span>
+          ${c.sahibi ? '<button class="btn btn-sm btn-danger ms-2">Sil</button>' : ''}
+        `;
+
+        if (c.sahibi) {
+          li.querySelector('button').addEventListener('click', async () => {
+            const ok = confirm('Yorumu silmek istediğinize emin misiniz?');
+            if (!ok) return;
+            const res = await fetch(`/api/videos/${id}/comments/${c.id}`, {
+              method: 'DELETE',
+              headers: { Authorization: 'Bearer ' + token }
+            });
+            if (res.ok) {
+              loadComments();
+            } else {
+              alert('Yorum silinemedi');
+            }
+          });
+        }
+
         list.appendChild(li);
       });
     }
+
+    async function loadLikes() {
+      const res = await fetch(`/api/videos/${id}/likes`, {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const data = await res.json();
+      document.getElementById('like-count').textContent = data.totalLikes;
+      document.getElementById('like-btn').classList.toggle('btn-danger', data.likedByUser);
+      document.getElementById('like-btn').classList.toggle('btn-outline-danger', !data.likedByUser);
+    }
+
+    document.getElementById('like-btn').addEventListener('click', async () => {
+      const res = await fetch(`/api/videos/${id}/like`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      if (res.ok) loadLikes();
+    });
 
     document.getElementById('comment-form').addEventListener('submit', async (e) => {
       e.preventDefault();

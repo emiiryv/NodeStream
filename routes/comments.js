@@ -7,11 +7,17 @@ const router = express.Router();
 // GET yorumları getir
 router.get('/videos/:id/comments', authMiddleware, async (req, res) => {
   const videoId = req.params.id;
+  const userId = req.user.userId;
+
   try {
     const result = await pool.query(
-      'SELECT yorum, tarih FROM comments WHERE video_id = $1 ORDER BY tarih DESC',
-      [videoId]
+      `SELECT *, (user_id = $2) AS sahibi
+       FROM comments
+       WHERE video_id = $1
+       ORDER BY tarih DESC`,
+      [videoId, userId]
     );
+
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -38,6 +44,29 @@ router.post('/videos/:id/comments', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Yorum ekleme hatası' });
+  }
+});
+
+
+// DELETE yorum sil
+router.delete('/videos/:videoId/comments/:commentId', authMiddleware, async (req, res) => {
+  const { videoId, commentId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM comments WHERE id = $1 AND video_id = $2',
+      [commentId, videoId]
+    );
+    const comment = result.rows[0];
+    if (!comment) return res.status(404).json({ error: 'Yorum bulunamadı' });
+    if (comment.user_id !== userId) return res.status(403).json({ error: 'Bu yorumu silemezsiniz' });
+
+    await pool.query('DELETE FROM comments WHERE id = $1', [commentId]);
+    res.json({ message: 'Yorum silindi' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Yorum silinirken hata oluştu' });
   }
 });
 
