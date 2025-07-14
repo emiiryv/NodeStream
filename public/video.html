@@ -12,7 +12,11 @@
 </head>
 <body class="bg-light">
   <div class="container my-5">
-    <h1 class="text-center mb-4" id="video-title">Video Başlığı</h1>
+    <h1 class="text-center mb-2" id="video-title">Video Başlığı</h1>
+    <p class="text-center mb-4">
+      <a id="video-uploader" href="#" class="text-decoration-none text-primary"></a>
+    </p>
+    <p id="video-description" class="text-center text-muted mb-4"></p>
     <div class="d-flex justify-content-center">
       <video id="video-player" width="720" height="400" controls class="border border-secondary rounded shadow"></video>
     </div>
@@ -60,6 +64,10 @@
       }
 
       document.getElementById('video-title').textContent = video.originalname;
+      document.getElementById('video-description').textContent = video.description || '';
+      const uploaderLink = document.getElementById('video-uploader');
+      uploaderLink.textContent = '@' + (video.username || 'kullanici');
+      uploaderLink.href = 'profile.html?id=' + video.uploaded_by;
       document.getElementById('video-player').src = '/api/stream/' + video.filename;
       document.getElementById('video-player').poster = '/thumbnails/' + (video.thumbnail_path || (video.filename + '.jpg'));
       await loadComments();

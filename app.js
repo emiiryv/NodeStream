@@ -8,6 +8,7 @@ const videoRoutes = require('./routes/videos');
 const streamRoutes = require('./routes/stream');
 const authRoutes = require('./routes/auth');
 const commentRoutes = require('./routes/comments');
+const userRoutes = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ app.use('/api/videos', videoRoutes);
 app.use('/api/stream', streamRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', commentRoutes);
+app.use('/api/users', userRoutes);
 
 // Server başlat
 app.listen(PORT, () => {

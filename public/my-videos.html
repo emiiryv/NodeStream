@@ -82,6 +82,39 @@
 
         cardBody.appendChild(title);
         cardBody.appendChild(deleteBtn);
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-secondary w-100 mt-2';
+        editBtn.textContent = 'Düzenle';
+        editBtn.onclick = (e) => {
+          e.stopPropagation();
+          const newTitle = prompt('Yeni başlık:', video.originalname);
+          const newDesc = prompt('Yeni açıklama:', video.description || '');
+          if (newTitle && newTitle.trim()) {
+            fetch(`/api/videos/${video.id}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer ' + token
+              },
+              body: JSON.stringify({
+                originalname: newTitle.trim(),
+                description: newDesc.trim()
+              })
+            })
+            .then(res => {
+              if (res.ok) {
+                alert('Güncellendi');
+                fetchMyVideos();
+              } else {
+                alert('Güncelleme başarısız');
+              }
+            });
+          }
+        };
+
+        cardBody.appendChild(editBtn);
+
         card.appendChild(thumb);
         card.appendChild(cardBody);
         col.appendChild(card);
