@@ -81,31 +81,77 @@
       const comments = await res.json();
       const list = document.getElementById('comment-list');
       list.innerHTML = '';
+
+      const commentMap = {};
       comments.forEach(c => {
+        commentMap[c.id] = { ...c, replies: [] };
+      });
+
+      comments.forEach(c => {
+        if (c.parent_comment_id) {
+          commentMap[c.parent_comment_id]?.replies.push(commentMap[c.id]);
+        }
+      });
+
+      const renderComment = (comment, isReply = false) => {
         const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.className = 'list-group-item';
+        if (isReply) li.classList.add('ms-4', 'bg-light');
+
         li.innerHTML = `
-          <span>${c.yorum} <small class="text-muted">(${new Date(c.tarih).toLocaleString()})</small></span>
-          ${c.sahibi ? '<button class="btn btn-sm btn-danger ms-2">Sil</button>' : ''}
+          <div class="d-flex justify-content-between align-items-center">
+            <span>${comment.yorum} <small class="text-muted">(${new Date(comment.tarih).toLocaleString()})</small></span>
+            <div>
+              <button class="btn btn-sm btn-outline-secondary me-2 reply-btn">Yanıtla</button>
+              ${comment.sahibi ? '<button class="btn btn-sm btn-danger">Sil</button>' : ''}
+            </div>
+          </div>
+          <div class="reply-form mt-2 d-none">
+            <textarea class="form-control mb-2 reply-text" rows="2" placeholder="Yanıtınız..."></textarea>
+            <button class="btn btn-primary btn-sm send-reply">Gönder</button>
+          </div>
         `;
 
-        if (c.sahibi) {
-          li.querySelector('button').addEventListener('click', async () => {
-            const ok = confirm('Yorumu silmek istediğinize emin misiniz?');
-            if (!ok) return;
-            const res = await fetch(`/api/videos/${id}/comments/${c.id}`, {
+        if (comment.sahibi) {
+          li.querySelector('.btn-danger').addEventListener('click', async () => {
+            if (!confirm('Yorumu silmek istediğinize emin misiniz?')) return;
+            const res = await fetch(`/api/videos/${id}/comments/${comment.id}`, {
               method: 'DELETE',
               headers: { Authorization: 'Bearer ' + token }
             });
-            if (res.ok) {
-              loadComments();
-            } else {
-              alert('Yorum silinemedi');
-            }
+            if (res.ok) loadComments();
+            else alert('Yorum silinemedi');
           });
         }
 
+        li.querySelector('.reply-btn').addEventListener('click', () => {
+          li.querySelector('.reply-form').classList.toggle('d-none');
+        });
+
+        li.querySelector('.send-reply').addEventListener('click', async () => {
+          const replyText = li.querySelector('.reply-text').value;
+          if (!replyText.trim()) return;
+          const res = await fetch(`/api/videos/${id}/comments`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + token
+            },
+            body: JSON.stringify({ yorum: replyText, parent_comment_id: comment.id })
+          });
+          if (res.ok) loadComments();
+          else alert('Yanıt gönderilemedi');
+        });
+
         list.appendChild(li);
+        (comment.replies || []).forEach(reply => {
+          renderComment(reply, true);
+        });
+        return li;
+      };
+
+      comments.forEach(c => {
+        if (!c.parent_comment_id) renderComment(commentMap[c.id]);
       });
     }
 

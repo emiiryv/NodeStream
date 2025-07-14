@@ -8,10 +8,11 @@ exports.getComments = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT *, (user_id = $2) AS sahibi
+      `SELECT id, yorum, tarih, user_id, parent_comment_id, 
+              (user_id = $2) AS sahibi
        FROM comments
        WHERE video_id = $1
-       ORDER BY tarih DESC`,
+       ORDER BY tarih ASC`,
       [videoId, userId]
     );
 
@@ -25,7 +26,7 @@ exports.getComments = async (req, res) => {
 exports.addComment = async (req, res) => {
   const videoId = req.params.id;
   const userId = req.user.userId;
-  const { yorum } = req.body;
+  const { yorum, parent_comment_id } = req.body;
 
   if (!yorum || yorum.trim() === '') {
     return res.status(400).json({ error: 'Yorum boş olamaz' });
@@ -33,8 +34,8 @@ exports.addComment = async (req, res) => {
 
   try {
     await pool.query(
-      'INSERT INTO comments (video_id, user_id, yorum) VALUES ($1, $2, $3)',
-      [videoId, userId, yorum.trim()]
+      'INSERT INTO comments (video_id, user_id, yorum, parent_comment_id) VALUES ($1, $2, $3, $4)',
+      [videoId, userId, yorum.trim(), parent_comment_id || null]
     );
     res.status(201).json({ message: 'Yorum eklendi' });
   } catch (err) {
