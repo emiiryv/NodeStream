@@ -14,6 +14,8 @@ router.get('/:id/likes', authMiddleware, videoController.getVideoLikes);
 const fs = require('fs');
 const path = require('path');
 
+router.post('/:id/view', videoController.incrementViewCount);
+router.get('/:id/views', videoController.getViewCount);
 router.put('/:id', authMiddleware, videoController.updateVideo);
 
 module.exports = router;

@@ -1,3 +1,35 @@
+exports.incrementViewCount = async (req, res) => {
+  const videoId = req.params.id;
+
+  try {
+    await pool.query(
+      'UPDATE videos SET views = views + 1 WHERE id = $1',
+      [videoId]
+    );
+    res.status(200).json({ message: 'Görüntüleme sayısı artırıldı' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Görüntüleme artırılamadı' });
+  }
+};
+
+exports.getViewCount = async (req, res) => {
+  const videoId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      'SELECT views FROM videos WHERE id = $1',
+      [videoId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Video bulunamadı' });
+    }
+    res.json({ views: result.rows[0].views });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Görüntüleme bilgisi alınamadı' });
+  }
+};
 
 
 const pool = require('../db');
@@ -28,7 +60,20 @@ exports.updateVideo = async (req, res) => {
   }
 };
 exports.getAllVideos = async (req, res) => {
-  const { search = '', sort = 'date' } = req.query;
+  const { search = '', sort = 'date', user_id } = req.query;
+
+  if (user_id) {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM videos WHERE uploaded_by = $1 ORDER BY upload_date DESC',
+        [user_id]
+      );
+      return res.json(result.rows);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Kullanıcıya ait videolar alınamadı' });
+    }
+  }
 
   let baseQuery = `
     SELECT v.*, COUNT(l.id) AS like_count

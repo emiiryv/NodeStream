@@ -25,6 +25,7 @@
         ❤️ Beğen
       </button>
       <div class="mt-1"><small><span id="like-count">0</span> beğeni</small></div>
+      <div><small><span id="view-count">0</span> görüntülenme</small></div>
     </div>
 
     <div class="mt-5">
@@ -71,7 +72,15 @@
       document.getElementById('video-player').src = '/api/stream/' + video.filename;
       document.getElementById('video-player').poster = '/thumbnails/' + (video.thumbnail_path || (video.filename + '.jpg'));
       await loadComments();
+      await fetch(`/api/videos/${id}/view`, {
+        method: 'POST'
+      });
       await loadLikes();
+      const viewRes = await fetch(`/api/videos/${id}/views`);
+      if (viewRes.ok) {
+        const viewData = await viewRes.json();
+        document.getElementById('view-count').textContent = viewData.views;
+      }
     }
 
     async function loadComments() {
